@@ -1,0 +1,266 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="icon" href="data:,">
+<title>Warung Senja — Cari Bedanya</title>
+<style>
+  :root {
+    --ink: #2b1d12;
+    --paper: #fff7e8;
+    --gold: #f5a623;
+    --red: #d94f3d;
+    --teal: #1f7a6d;
+    --panel: #fffdf6;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; background: #241a12; }
+  body {
+    font-family: "Trebuchet MS", "Segoe UI", system-ui, sans-serif;
+    color: var(--ink);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+  #app {
+    width: 1240px;
+    max-width: 100vw;
+    background: linear-gradient(180deg, #3a2417 0%, #241a12 100%);
+    padding: 10px 14px 14px;
+  }
+  header {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 2px 4px 10px;
+    color: var(--paper);
+  }
+  header h1 { font-size: 26px; margin: 0; letter-spacing: 0.5px; }
+  header h1 span { color: var(--gold); }
+  header .sub { font-size: 13px; opacity: 0.85; margin-top: 2px; }
+  #hud {
+    margin-left: auto;
+    display: flex;
+    gap: 10px;
+    align-items: center;
+  }
+  .pill {
+    background: var(--panel);
+    color: var(--ink);
+    border-radius: 999px;
+    padding: 7px 14px;
+    font-weight: 700;
+    font-size: 15px;
+    white-space: nowrap;
+    box-shadow: 0 2px 0 rgba(0,0,0,0.35);
+  }
+  .pill b { color: var(--red); }
+  #timerWrap {
+    width: 190px;
+    background: rgba(255,255,255,0.18);
+    border-radius: 999px;
+    padding: 4px;
+  }
+  #timerBar {
+    height: 16px;
+    border-radius: 999px;
+    background: linear-gradient(90deg, #57b26a, #a8d94f);
+    width: 100%;
+    transition: width 0.2s linear;
+  }
+  #timerBar.low { background: linear-gradient(90deg, #d94f3d, #f5a623); }
+  #timerText { font-size: 12px; color: var(--paper); text-align: center; margin-top: 2px; font-weight: 700; }
+  #stage { position: relative; display: flex; gap: 12px; justify-content: center; }
+  .panel {
+    background: var(--panel);
+    border-radius: 12px;
+    padding: 8px 8px 6px;
+    box-shadow: 0 4px 0 rgba(0,0,0,0.4);
+  }
+  .panel h2 {
+    margin: 0 0 6px;
+    font-size: 15px;
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+  }
+  .panel h2 .tag {
+    font-size: 12px;
+    background: var(--teal);
+    color: #fff;
+    border-radius: 999px;
+    padding: 3px 9px;
+  }
+  .panel h2 .tag.right { background: var(--red); }
+  canvas.scene { display: block; width: 584px; height: 416px; border-radius: 8px; cursor: crosshair; }
+  #versus {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    width: 54px;
+    height: 54px;
+    border-radius: 50%;
+    background: var(--gold);
+    color: #fff;
+    font-weight: 800;
+    font-size: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 4px solid #fff;
+    box-shadow: 0 3px 10px rgba(0,0,0,0.5);
+    z-index: 3;
+    pointer-events: none;
+  }
+  #controls {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    margin-top: 12px;
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+  button {
+    font-family: inherit;
+    font-size: 15px;
+    font-weight: 700;
+    border: none;
+    border-radius: 999px;
+    padding: 10px 20px;
+    cursor: pointer;
+    box-shadow: 0 3px 0 rgba(0,0,0,0.35);
+  }
+  button:active { transform: translateY(2px); box-shadow: none; }
+  #hintBtn { background: var(--gold); color: #fff; }
+  #restartBtn { background: var(--panel); color: var(--ink); }
+  #soundBtn { background: var(--panel); color: var(--ink); }
+  #levelBtns button { background: var(--teal); color: #fff; }
+  #levelBtns button.active { background: var(--red); }
+  #levelBtns button.locked { opacity: 0.45; }
+  #message {
+    text-align: center;
+    color: var(--paper);
+    font-size: 14px;
+    min-height: 22px;
+    margin-top: 8px;
+  }
+  #message .good { color: #9be15d; font-weight: 700; }
+  #message .bad { color: #ff9a8a; font-weight: 700; }
+  .overlay {
+    position: absolute;
+    inset: 0;
+    background: rgba(20, 12, 6, 0.82);
+    border-radius: 12px;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 5;
+    text-align: center;
+    color: var(--paper);
+  }
+  .overlay.show { display: flex; }
+  .overlay .card {
+    background: var(--panel);
+    color: var(--ink);
+    border-radius: 16px;
+    padding: 26px 34px;
+    max-width: 640px;
+    box-shadow: 0 8px 30px rgba(0,0,0,0.6);
+  }
+  .overlay .card h2 { font-size: 30px; margin: 0 0 8px; }
+  .overlay .card p { font-size: 15px; line-height: 1.55; margin: 6px 0; }
+  .overlay .card .big { font-size: 44px; }
+  .overlay .card button { background: var(--red); color: #fff; margin-top: 12px; font-size: 17px; padding: 12px 28px; }
+  .overlay .card button.secondary { background: var(--teal); }
+  .levelsRow { display: flex; gap: 10px; justify-content: center; margin: 14px 0 4px; }
+  .levelsRow button { background: var(--teal); color: #fff; }
+  .levelsRow button.hard { background: #8e44ad; }
+  kbd {
+    background: #eee;
+    border: 1px solid #bbb;
+    border-bottom-width: 3px;
+    border-radius: 6px;
+    padding: 1px 7px;
+    font-family: inherit;
+    font-weight: 700;
+  }
+  #status { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+  footer { text-align: center; color: rgba(255,247,232,0.6); font-size: 12px; padding-top: 10px; }
+</style>
+</head>
+<body>
+<div id="app">
+  <header>
+    <div>
+      <h1>🌇 Warung Senja <span>— Cari Bedanya</span></h1>
+      <div class="sub">Dua gambar nyaris sama. Temukan semua perbedaannya sebelum waktu habis!</div>
+    </div>
+    <div id="hud">
+      <div class="pill">🏆 Skor <b id="score">0</b></div>
+      <div class="pill">🔍 Sisa <b id="remain">7</b> beda</div>
+      <div id="timerWrap"><div id="timerBar"></div><div id="timerText">⏱ 3:00</div></div>
+    </div>
+  </header>
+
+  <div id="stage">
+    <div class="panel">
+      <h2><span>🅰 Gambar Kiri — Asli</span><span class="tag">PANEL A</span></h2>
+      <canvas id="canvasA" class="scene" width="560" height="400"></canvas>
+    </div>
+    <div id="versus">VS</div>
+    <div class="panel">
+      <h2><span>🅱 Gambar Kanan — Ada yang beda!</span><span class="tag right">PANEL B</span></h2>
+      <canvas id="canvasB" class="scene" width="560" height="400"></canvas>
+    </div>
+
+    <div id="overlayMenu" class="overlay show">
+      <div class="card">
+        <div class="big">🌇🔍</div>
+        <h2>Warung Senja — Cari Bedanya</h2>
+        <p><b>Cara main:</b> klik perbedaan pada gambar kiri <i>atau</i> kanan. Setiap temuan
+        ditandai lingkaran emas. Klik yang salah mengurangi waktu 5 detik. Butuh bantuan?
+        tekan <kbd>H</kbd> untuk petunjuk (3× per level, −25 poin).</p>
+        <p>Tiga adegan asli Indonesia, makin sulit di tiap level — warung kopi senja,
+        pasar malam, lalu pantai tropis dengan <b>10 perbedaan</b>.</p>
+        <div class="levelsRow">
+          <button data-level="0">☕ Level 1 · Warung Kopi · 7 beda</button>
+          <button data-level="1">🎡 Level 2 · Pasar Malam · 8 beda</button>
+          <button data-level="2" class="hard">🏖 Level 3 · Pantai Tropis · 10 beda</button>
+        </div>
+        <button id="playBtn">▶ Mulai Main</button>
+        <p style="font-size:13px; opacity:0.75">Keyboard: <kbd>H</kbd> petunjuk · <kbd>R</kbd> ulangi level · <kbd>M</kbd> suara</p>
+      </div>
+    </div>
+
+    <div id="overlayEnd" class="overlay">
+      <div class="card">
+        <div class="big" id="endEmoji">🎉</div>
+        <h2 id="endTitle">Hebat!</h2>
+        <p id="endText"></p>
+        <p id="endScore" style="font-size:20px; font-weight:800"></p>
+        <button id="endPrimary">Lanjut</button>
+        <button id="endSecondary" class="secondary">Menu Utama</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="controls">
+    <button id="hintBtn">💡 Petunjuk (<span id="hintLeft">3</span>) — H</button>
+    <button id="restartBtn">↻ Ulangi Level — R</button>
+    <button id="soundBtn">🔊 Suara: Nyala — M</button>
+    <span id="levelBtns">
+      <button data-level="0" class="active">1 · Warung</button>
+      <button data-level="1">2 · Pasar</button>
+      <button data-level="2">3 · Pantai</button>
+    </span>
+  </div>
+  <div id="message">Pilih level, lalu klik perbedaan yang kamu temukan. Selamat berburu! 👀</div>
+  <footer>Warung Senja — Cari Bedanya · adegan &amp; gambar digambar dengan kode (canvas), tanpa foto, tanpa aset luar · dibuat untuk make.fun</footer>
+</div>
+<p id="status" role="status" aria-live="polite"></p>
+<script type="module" src="./src/main.js"></script>
+</body>
+</html>
